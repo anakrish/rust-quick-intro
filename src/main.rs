@@ -293,7 +293,119 @@ fn snippet_3() {
 }
 
 // Concepts:
-// - crates.io
+//  - deref using *
+//  - rustup doc [item]
+//  - std::iter::Iterator
+//    - any
+//    - all
+//    - collect
+//    - filter
+//    - fold
+//    - map
+//  - lambdas
+//  - pass by value
+//  - pass by &
+//  - pass by &mut
+fn compute_and_store(coeffs: &[f64], k: f64, values: &mut Vec<f64>) {
+    // Start with v = 1
+    let mut v = 1f64;
+    for c in coeffs {
+        // Multiply each coefficient
+        v *= c;
+    }
+    // Add constant k
+    v += k;
+    values.push(v);
+    println!("value 1 = {v}");
+
+    // Type `rustup doc` in a terminal to bring up rust documentation.
+    // Type `rustup doc std::iter::Iterator` to bring up documentation for std::iter.
+    // Idiomatic rust typically  uses various operations over iterators instead of writing loops.
+    let v = coeffs.iter().fold(1f64, |v, c| v * c) + k;
+    //                               ^ operation (lambda)
+    //                         ^ starting value
+    values.push(v);
+    println!("value 2 = {v}");
+
+    let v = coeffs.iter().map(|c| c * 2.0).fold(1f64, |v, c| v * c) + k;
+    println!("value 3 = {v}");
+
+    // Some predicates:
+    let q = (
+        coeffs.iter().any(|c| *c < 0.0),
+        coeffs.iter().all(|c| c > &0.0),
+    );
+    println!("q = {q:?}");
+
+    // Filter coefficients.
+    let set: Vec<&f64> = coeffs.iter().filter(|c| **c > 2.0).collect();
+    println!("set 1 = {set:?}");
+    let set: Vec<f64> = coeffs.iter().filter(|c| **c > 2.0).cloned().collect();
+    println!("set 2 = {set:?}");
+}
+
+#[test]
+// Concepts:
+//  - &, &mut for arguments
+//  - vec!
+fn snippet_4() {
+    let mut values = vec![];
+    compute_and_store(&[1f64, 2.0, 3.0], 10f64, &mut values);
+}
+
+fn append(value: i64, collection: &mut Vec<i64>) {
+    collection.push(value)
+}
+
+fn exists(value: i64, collection: &Vec<i64>) -> bool {
+    collection.iter().any(|v| *v == value)
+}
+
+#[test]
+// Concepts:
+//  - borrow semantics
+fn snippet_5() {
+    let mut collection = vec![];
+    append(5, &mut collection);
+
+    let first = &collection[0];
+    println!("first = {first}");
+
+    let r = exists(5, &collection);
+    println!("r = {r}, first = {first}");
+
+    // Cannot pass a reference in a mutable reference context.
+    // There is no way in rust to cast away "constness", unlike in C/C++.
+    // Even in `unsafe` code.
+    // append(6, &collection);
+
+    // Append to collection.
+    append(6, &mut collection);
+
+    // Uncomment the following line.
+    // println!("first = {first}");
+
+    // It causes compile error:
+    //    cannot borrow `collection` as mutable because it is also borrowed as immutable
+    // This is because append takes a mutable reference to collection and can modify the
+    // collection. There is no guarantee that any references we held for the collection
+    // (e.g first) is valid anymore; modifying the collection could have caused a memory
+    // allocation.
+    // In Rust,
+    //   1) there can be many active references to an object
+    //   2) Or there can by only one mutable reference to an object.
+    // This avoids a whole bunch of memory corruption errors at compile-time itself.
+    let first = &collection[0];
+    println!("first = {first}");
+
+    let first = &mut collection[0];
+    append(7, &mut collection);
+    // Uncomment the following line to observe the error.
+    //*first = 8;
+}
+
+// Concepts:
+// - crates.io/
 // - docs.rs
 // - lazy_static
 // - 'static lifetime
@@ -384,7 +496,7 @@ fn get_capital_for_state(state: &str) -> Result<&'static str> {
 // - error propagation using ?
 // - Unit type
 #[test]
-fn snippet_4() -> Result<()> {
+fn snippet_6() -> Result<()> {
     // Get the capital or propagate the error.
     let capital = get_capital_for_state("Washington")?;
     println!("Successfully fetched value {capital}");
@@ -464,7 +576,7 @@ fn add_values(a: Value, b: Value) -> Result<Value> {
 }
 
 #[test]
-fn snippet_5() -> Result<()> {
+fn snippet_7() -> Result<()> {
     // Construct enums using variant names.
     let a = Value::Number(5);
     println!("a is number = {}", is_number(&a));
@@ -495,3 +607,8 @@ fn snippet_5() -> Result<()> {
 fn main() {
     println!("Hello, world!");
 }
+
+// Future topics:
+// file handling, system calls, executing other programs, concurrency support
+// calling into C/C++, socket grpc/socket programming, passing parameters to functions, libraries
+// borrow semantics, lifetime
